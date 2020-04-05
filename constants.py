@@ -75,3 +75,9 @@ TRIALS = dict([trial for category in TRIALS_BY_CATEGORY.values()
 
 IMPAIRMENTS = ["Belastung", "Betäubung", "Entrückung", "Furcht", "Paralyse",
                "Schmerz", "Verwirrung"]
+
+SPECIES = {
+    "Menschen": {"LE_GW": 5},
+    "Halbelfen": {"LE_GW": 5},
+    "Elfen": {"LE_GW": 2}
+}
