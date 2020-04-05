@@ -8,6 +8,7 @@
   "GE": 15,
   "KO": 13,
   "KK": 11,
+  "LE_BONUS": 4,
   "species": "Elfen",
   "talents": {
     "Fliegen": 0,
@@ -37,8 +38,8 @@
     "Fesseln": 0,
     "Fischen & Angeln": 0,
     "Orientierung": 4,
-    "Pflanzenkunde": 5,
-    "Tierkunde": 5,
+    "Pflanzenkunde": 7,
+    "Tierkunde": 7,
     "Wildnisleben": 7,
     "Brett- & Glücksspiel": 0,
     "Geographie": 0,
