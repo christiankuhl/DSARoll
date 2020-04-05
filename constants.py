@@ -79,5 +79,6 @@ IMPAIRMENTS = ["Belastung", "Betäubung", "Entrückung", "Furcht", "Paralyse",
 SPECIES = {
     "Menschen": {"LE_GW": 5},
     "Halbelfen": {"LE_GW": 5},
-    "Elfen": {"LE_GW": 2}
+    "Elfen": {"LE_GW": 2},
+    "Zwerge": {"LE_GW": 8}
 }
