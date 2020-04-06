@@ -51,7 +51,7 @@ class Character:
             dice_rolls.append((base_property, die))
             talent += min(base_value + bonus_or_malus - die
                           - sum(self.impairments.values()), 0)
-        if talent >= 0 or critical_hit >= 2:
+        if (talent >= 0 or critical_hit >= 2) and critical_miss < 2:
             if talent > 15:
                 quality = 6
             elif talent > 12:
@@ -66,14 +66,14 @@ class Character:
                 quality = 1
             return Success(character=self,
                            trial=trial,
-                           critical=(critical_hit>=2),
+                           critical=critical_hit,
                            quality=quality,
                            dice_rolls=dice_rolls,
                            bonus_or_malus=bonus_or_malus)
         else:
             return Failure(character=self,
                            trial=trial,
-                           critical=(critical_miss>=2),
+                           critical=critical_miss,
                            dice_rolls=dice_rolls,
                            bonus_or_malus=bonus_or_malus)
 
@@ -83,13 +83,18 @@ class ResultMeta(type):
 
 class Result(metaclass=ResultMeta):
     def __init__(self, character, trial, critical, dice_rolls, bonus_or_malus,
-                 quality=None):
+                 quality=None, kind=None):
         self.character = character
         self.trial = trial
-        self.critical = critical
+        self.critical = (critical >= 2)
+        self.terrible = (critical == 3)
         self.dice_rolls = dice_rolls
         self.quality = quality
         self.bonus_or_malus = bonus_or_malus
+        if kind:
+            self.kind = kind
+        else:
+            self.kind = "Probe auf"
     def dice_str(self):
         res = (4 * " ").join(f"{pr}: {roll} / {getattr(self.character, pr)}"
                               for (pr, roll) in self.dice_rolls) + "\n"
@@ -106,8 +111,8 @@ class Result(metaclass=ResultMeta):
 class Success(Result):
     title = "Erfolg!"
     def __repr__(self):
-        res = (f"{self.character.name} erzielt bei der Probe auf {self.trial} "
-                 f"einen {'kritischen ' if self.critical else ''}Erfolg!\n\n"
+        res = (f"{self.character.name}s {self.kind} {self.trial} ist ein "
+                 f"{'kritischer ' if self.critical else ''}Erfolg!\n\n"
                  f"Qualitätsstufe {self.quality}\n\n")
         res += self.dice_str()
         return res
@@ -115,7 +120,11 @@ class Success(Result):
 class Failure(Result):
     title = "Fehlschlag!"
     def __repr__(self):
-        res = (f"{self.character.name} erleidet bei der Probe auf {self.trial} "
-                f"einen {'kritischen ' if self.critical else ''}Fehlschlag!\n\n")
+        if not self.terrible:
+            res = (f"{self.character.name}s {self.kind} {self.trial} ist ein "
+                    f"{'kritischer ' if self.critical else ''}Fehlschlag!\n\n")
+        else:
+            res = (f"{self.character.name}s {self.kind} {self.trial} endet in einem"
+                    f"schrecklichen Missgeschick!\n\n")
         res += self.dice_str()
         return res

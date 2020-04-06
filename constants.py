@@ -99,7 +99,7 @@ SPELLS = {
     "Gardianum": {
         "trial": ["MU", "KL", "CH"]
     },
-    "Blitz dich find": {
+    "'Blitz dich find'": {
         "trial": ["MU", "IN", "CH"],
         "modifier": "SK"
     },
