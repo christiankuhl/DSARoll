@@ -4,7 +4,6 @@ import os
 from character import Character
 from constants import TRIALS
 
-
 class GUI(QWidget):
     def __init__(self):
         super().__init__()
@@ -21,17 +20,17 @@ class GUI(QWidget):
         layout.addLayout(self.character_choice(), 0, 0)
         layout.addWidget(self.impairment_block(), 1, 0, 4, 2)
         layout.addWidget(self.trial_choice(), 7, 0)
+        self.magic_block = self.spell_choice()
+        layout.addWidget(self.magic_block, 8, 0)
         self.setLayout(layout)
+        self.toggle_magic()
         self.reset_spinners()
         self.show()
     @property
     def character(self):
         return self.characters[self.character_choice.currentText()]
-    @property
-    def trial(self):
-        return self.trial_choice.currentText()
-    def roll(self):
-        result = self.character.do_trial(self.trial, self.bonus_or_malus.value())
+    def roll(self, trial, bonus_or_malus):
+        result = self.character.do_trial(trial, bonus_or_malus)
         msg = QMessageBox.information(self, str(type(result)), str(result), QMessageBox.Ok)
     def set_impairment(self, condition, value):
         self.character.impairments[condition] = value
@@ -39,7 +38,16 @@ class GUI(QWidget):
         self.character.LE = value
         self.impairments["Schmerz"].setMinimum(self.character.pain_from_le)
     def change_character(self):
+        self.toggle_magic()
         self.reset_spinners()
+    def toggle_magic(self):
+        if self.character.spells:
+            self.spell_choice.clear()
+            self.spell_choice.insertItems(0, self.character.spells.keys())
+            self.magic_block.setVisible(True)
+        else:
+            self.magic_block.setVisible(False)
+            self.adjustSize()
     def reset_spinners(self):
         self.le_spinner.setMaximum(self.character.maxLE)
         self.le_spinner.setValue(self.character.LE)
@@ -65,7 +73,7 @@ class GUI(QWidget):
         return char_choice
     def trial_choice(self):
         trial_frame = QGroupBox()
-        trial_frame.setTitle("Probe")
+        trial_frame.setTitle("Proben")
         trial_grid = QGridLayout()
         self.trial_choice = QComboBox()
         self.trial_choice.insertItems(0, TRIALS.keys())
@@ -77,7 +85,8 @@ class GUI(QWidget):
         trial_grid.addWidget(label, 0, 1)
         trial_grid.addWidget(self.bonus_or_malus, 0, 2)
         roll = QPushButton('Würfeln')
-        roll.clicked.connect(self.roll)
+        roll.clicked.connect(lambda: self.roll(self.trial_choice.currentText(),
+                                               self.bonus_or_malus.value()))
         trial_grid.addWidget(roll, 0, 3)
         trial_frame.setLayout(trial_grid)
         return trial_frame
@@ -99,3 +108,21 @@ class GUI(QWidget):
             grid.addWidget(self.impairments[condition], row % 4, 2 * (row // 4) + 1)
         impairment_frame.setLayout(grid)
         return impairment_frame
+    def spell_choice(self):
+        spell_frame = QGroupBox()
+        spell_frame.setTitle("Zaubersprüche")
+        spell_grid = QGridLayout()
+        self.spell_choice = QComboBox()
+        spell_grid.addWidget(self.spell_choice, 0, 0)
+        self.magic_bonus_or_malus = QSpinBox()
+        self.magic_bonus_or_malus.setMinimum(-20)
+        label = QLabel()
+        label.setText("Bonus/Malus:")
+        spell_grid.addWidget(label, 0, 1)
+        spell_grid.addWidget(self.magic_bonus_or_malus, 0, 2)
+        roll = QPushButton('Würfeln')
+        roll.clicked.connect(lambda: self.roll(self.spell_choice.currentText(),
+                                               self.magic_bonus_or_malus.value()))
+        spell_grid.addWidget(roll, 0, 3)
+        spell_frame.setLayout(spell_grid)
+        return spell_frame

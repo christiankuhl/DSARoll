@@ -70,5 +70,15 @@
     "Schlösserknacken": 0,
     "Steinbearbeitung": 0,
     "Stoffbearbeitung": 0
+  },
+  "spells": {
+    "Freundschaftslied": 4,
+    "Armatrutz": 10,
+    "Balsam Salabunde": 5,
+    "Odem Arcanum": 3,
+    "Silentium": 6,
+    "Fulminictus": 5,
+    "Visibili": 5,
+    "Wasseratem": 3
   }
 }

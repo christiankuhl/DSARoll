@@ -75,7 +75,7 @@ SPELLS = {
         "trial": ["IN", "CH", "CH"],
     },
     "Armatrutz": {
-        "trial": ["KL, ""IN", "FF"]
+        "trial": ["KL", "IN", "FF"]
     },
     "Balsam Salabunde": {
         "trial": ["KL", "IN", "FF"]
@@ -122,8 +122,35 @@ IMPAIRMENTS = ["Belastung", "Betäubung", "Entrückung", "Furcht", "Paralyse",
                "Schmerz", "Verwirrung"]
 
 SPECIES = {
-    "Menschen": {"LE_GW": 5},
-    "Halbelfen": {"LE_GW": 5},
-    "Elfen": {"LE_GW": 2},
-    "Zwerge": {"LE_GW": 8}
+    "Menschen": {
+        "LE_GW": 5,
+        "ZK_GW": -5,
+        "SK_GW": -5
+    },
+    "Halbelfen": {
+        "LE_GW": 5,
+        "ZK_GW": -6,
+        "SK_GW": -4
+    },
+    "Elfen": {
+        "LE_GW": 2,
+        "ZK_GW": -6,
+        "SK_GW": -4
+    },
+    "Zwerge": {
+        "LE_GW": 8,
+        "ZK_GW": -4,
+        "SK_GW": -4
+    }
 }
+
+def trial_info(trial):
+    rolls = TRIALS.get(trial)
+    kind = "Probe auf"
+    modifier = None
+    if not rolls:
+        spell = SPELLS[trial]
+        rolls = spell["trial"]
+        kind = "Zauber"
+        modifier = spell.get("modifier", "")
+    return rolls.copy(), kind, modifier

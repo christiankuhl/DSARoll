@@ -69,5 +69,14 @@
     "Schlösserknacken": 0,
     "Steinbearbeitung": 0,
     "Stoffbearbeitung": 0
+  },
+  "spells": {
+    "Gardianum": 4,
+    "'Blitz dich find'": 6,
+    "Ignifaxius": 6,
+    "Armatrutz": 5,
+    "Psychostabilis": 4,
+    "Fulminictus": 8,
+    "Paralysis": 4
   }
 }
