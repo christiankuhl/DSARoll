@@ -70,6 +70,51 @@ TRIALS_BY_CATEGORY = {
     }
 }
 
+SPELLS = {
+    "Freundschaftslied": {
+        "trial": ["IN", "CH", "CH"],
+    },
+    "Armatrutz": {
+        "trial": ["KL, ""IN", "FF"]
+    },
+    "Balsam Salabunde": {
+        "trial": ["KL", "IN", "FF"]
+    },
+    "Odem Arcanum": {
+        "trial": ["KL", "IN", "IN"]
+    },
+    "Silentium": {
+        "trial": ["KL", "FF", "KK"]
+    },
+    "Fulminictus": {
+        "trial": ["KL", "IN", "KO"],
+        "modifier": "ZK"
+    },
+    "Visibili": {
+        "trial": ["KL", "IN", "KO"]
+    },
+    "Wasseratem": {
+        "trial": ["KL", "IN", "KO"]
+        },
+    "Gardianum": {
+        "trial": ["MU", "KL", "CH"]
+    },
+    "Blitz dich find": {
+        "trial": ["MU", "IN", "CH"],
+        "modifier": "SK"
+    },
+    "Ignifaxius": {
+        "trial": ["MU", "KL", "CH"]
+    },
+    "Psychostabilis": {
+        "trial": ["KL", "IN", "FF"]
+    },
+    "Paralysis": {
+        "trial": ["KL", "IN", "KO"],
+        "modifier": "ZK"
+    }
+}
+
 TRIALS = dict([trial for category in TRIALS_BY_CATEGORY.values()
                for trial in category.items()])
 

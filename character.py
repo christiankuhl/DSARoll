@@ -51,8 +51,12 @@ class Character:
             dice_rolls.append((base_property, die))
             talent += min(base_value + bonus_or_malus - die
                           - sum(self.impairments.values()), 0)
-        if talent >= 0:
-            if talent > 9:
+        if talent >= 0 or critical_hit >= 2:
+            if talent > 15:
+                quality = 6
+            elif talent > 12:
+                quality = 5
+            elif talent > 9:
                 quality = 4
             elif talent > 6:
                 quality = 3
