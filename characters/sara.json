@@ -78,5 +78,10 @@
     "Psychostabilis": 4,
     "Fulminictus": 8,
     "Paralysis": 4
+  },
+  "melee_weapons": {
+    "Langschwert": {"AT": 15, "PA": 9, "TP": [1, 4]},
+    "Magierstab, lang": {"AT": 11, "PA": 9, "TP": [1, 2]},
+    "Fackel": {"AT": 6, "PA": 1, "TP": [1, 0]}
   }
 }

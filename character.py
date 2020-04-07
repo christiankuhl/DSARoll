@@ -1,7 +1,10 @@
 import json
 import random
-from constants import TRIALS, IMPAIRMENTS, SPECIES, SPELLS, trial_info
+from rule_constants import TRIALS, IMPAIRMENTS, SPECIES, SPELLS, trial_info, \
+                           ATTACK_EFFECTS
 from math import floor, ceil
+
+OP_TEXTS = {"AT": "Attacke", "PA": "Parade", "FK": "Schuss", "AW": "Ausweichen"}
 
 def W20():
     return random.randint(1, 20)
@@ -15,11 +18,16 @@ def round(n):
     else:
         return ceil(n)
 
+def TP(weapon, effects):
+    pass
+
 class Character:
     def __init__(self, filename):
         with open(filename, "r") as file_handle:
             raw_data = json.load(file_handle)
         self.spells = {}
+        self.long_range_weapons = {}
+        self.melee_weapons = {}
         for key, property in raw_data.items():
             setattr(self, key, property)
         self.maxLE = (SPECIES[self.species]["LE_GW"] + raw_data.get("LE_BONUS", 0)
@@ -97,6 +105,63 @@ class Character:
                            critical=critical_miss,
                            dice_rolls=dice_rolls,
                            bonus_or_malus=bonus_or_malus)
+    def attack(self, weapon_name, effects, lrw=False, parry=False):
+        if lrw:
+            weapon = self.long_range_weapons[weapon_name]
+            operation = "FK"
+        elif parry:
+            weapon = self.melee_weapons[weapon_name]
+            operation = "PA"
+        else:
+            weapon = self.melee_weapons[weapon_name]
+            operation = "AT"
+        weapon = (weapon_name, weapon)
+        effects = {effect: ATTACK_EFFECTS[effect] for effect in effects}
+        return self.attack_roll(weapon, operation, effects)
+    def attack_roll(self, weapon, operation, effects):
+        target_value = weapon[1][operation]
+        attack_modifier = 0
+        tp_modifier = 0
+        critical = False
+        possible_tp = None
+        dice_rolls = []
+        attack_effect = sum(a for (a, _) in effects.values())
+        impairment_effect = sum(self.impairments.values())
+        die = W20()
+        retry = W20()
+        dice_rolls.append(die)
+        successful = lambda d: (d <= target_value + attack_effect
+                                - impairment_effect)
+        success = successful(die)
+        if die == 1 and success and successful(retry):
+            critical = True
+            dice_rolls.append(retry)
+        if die == 20 and not successful(retry):
+            critical = True
+            success = False
+            dice_rolls.append(retry)
+        if success:
+            if operation not in ["AW", "PA"]:
+                possible_tp = TP(weapon, effects)
+            return AttackSuccess(character=self,
+                                 weapon=weapon,
+                                 operation=operation,
+                                 critical=critical,
+                                 dice_rolls=dice_rolls,
+                                 effects=effects,
+                                 possible_tp=possible_tp)
+        else:
+            return AttackFailure(character=self,
+                                 weapon=weapon,
+                                 operation=operation,
+                                 critical=critical,
+                                 dice_rolls=dice_rolls,
+                                 effects=effects,
+                                 possible_tp=None)
+    def dodge(self, bonus_or_malus):
+        return self.attack_roll(weapon=(None, {"AW": self.AW}),
+                                operation="AW",
+                                effects={"Bonus/Malus:": (bonus_or_malus, 0)})
 
 class ResultMeta(type):
     def __repr__(cls):
@@ -113,6 +178,14 @@ class Result(metaclass=ResultMeta):
         self.quality = quality
         self.bonus_or_malus = bonus_or_malus
         _, self.kind, self.modifier = trial_info(trial)
+    def __repr__(self):
+        if not self.terrible:
+            res = (f"{self.character.name}s {self.kind} {self.trial} ist ein "
+                     f"{'kritischer ' if self.critical else ''}{self.title}\n\n")
+        else:
+            res = (f"{self.character.name}s {self.kind} {self.trial} endet in einem"
+                    f"schrecklichen Missgeschick!\n\n")
+        return res
     def dice_str(self):
         res = (4 * " ").join(f"{pr}: {roll} / {getattr(self.character, pr)}"
                               for (pr, roll) in self.dice_rolls) + "\n"
@@ -131,20 +204,30 @@ class Result(metaclass=ResultMeta):
 class Success(Result):
     title = "Erfolg!"
     def __repr__(self):
-        res = (f"{self.character.name}s {self.kind} {self.trial} ist ein "
-                 f"{'kritischer ' if self.critical else ''}Erfolg!\n\n"
-                 f"Qualitätsstufe {self.quality}\n\n")
-        res += self.dice_str()
-        return res
+        return super().__repr__() + f"Qualitätsstufe {self.quality}\n\n" + self.dice_str()
 
 class Failure(Result):
     title = "Fehlschlag!"
     def __repr__(self):
-        if not self.terrible:
-            res = (f"{self.character.name}s {self.kind} {self.trial} ist ein "
-                    f"{'kritischer ' if self.critical else ''}Fehlschlag!\n\n")
-        else:
-            res = (f"{self.character.name}s {self.kind} {self.trial} endet in einem"
-                    f"schrecklichen Missgeschick!\n\n")
-        res += self.dice_str()
-        return res
+        return super().__repr__() + self.dice_str()
+
+class AttackResult(metaclass=ResultMeta):
+    def __init__(self, character, weapon, operation, critical, dice_rolls,
+                 effects, possible_tp):
+        self.character = character
+        self.weapon = weapon[0]
+        self.operation = operation
+        self.critical = critical
+        self.dice_rolls = dice_rolls
+        self.effects = effects
+        self.kind = OP_TEXTS[operation]
+    def __repr__(self):
+        wpn = f" ({self.weapon})" if self.weapon else ""
+        return (f"{self.character.name}s {self.kind}{wpn} ist ein "
+                 f"{'kritischer ' if self.critical else ''}{self.title}\n\n")
+
+class AttackSuccess(AttackResult):
+    title = "Erfolg!"
+
+class AttackFailure(AttackResult):
+    title = "Fehlschlag!"

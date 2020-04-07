@@ -80,5 +80,11 @@
     "Fulminictus": 5,
     "Visibili": 5,
     "Wasseratem": 3
+  },
+  "melee_weapons": {
+    "Dolch": {"AT": 9, "PA": 6, "TP": [1, 1]}
+  },
+  "long_range_weapons": {
+    "Elfenbogen": {"FK": 14, "TP": [1, 5]}
   }
 }

@@ -70,5 +70,13 @@
     "Schlösserknacken": 5,
     "Steinbearbeitung": 0,
     "Stoffbearbeitung": 0
+  },
+  "melee_weapons": {
+    "Felsspalter": {"AT": 17, "PA": 8, "TP": [2, 4]},
+    "Schwerer Dolch": {"AT": 11, "PA": 5, "TP": [1, 2]},
+    "Waffenlos": {"AT": 13, "PA": 8, "TP": [1, 1]}
+  },
+  "long_range_weapons": {
+    "Leichte Armbrust": {"FK": 13, "TP": [1, 6]}
   }
 }
