@@ -78,5 +78,9 @@
   },
   "long_range_weapons": {
     "Leichte Armbrust": {"FK": 13, "TP": [1, 6]}
-  }
+  },
+  "maneuvers": [
+    "Wuchtschlag I",
+    "Wuchtschlag II"
+  ]
 }

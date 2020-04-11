@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, QComboBox,\
                             QButtonGroup, QRadioButton
 import os
 from character import Character
-from rule_constants import TRIALS
+from rule_constants import TRIALS, ATTACK_EFFECTS
 
 class GUI(QWidget):
     def __init__(self):
@@ -38,13 +38,18 @@ class GUI(QWidget):
         result = self.character.do_trial(trial, bonus_or_malus)
         QMessageBox.information(self, str(type(result)), str(result), QMessageBox.Ok)
     def attack(self, lrw, parry=False):
+        bonus_or_malus = 0
         effects = []
         if lrw:
             weapon = self.lrw_choice.currentText()
-            effects.append(self.get_range())
+            effects.append(self.lrw_range)
         else:
             weapon = self.mw_choice.currentText()
-        result = self.character.attack(weapon, effects, lrw, parry)
+            if parry:
+                bonus_or_malus = self.dodge_bonus_or_malus.value()
+            else:
+                effects.append(self.maneuver)
+        result = self.character.attack(weapon, effects, lrw, parry, bonus_or_malus)
         QMessageBox.information(self, str(type(result)), str(result), QMessageBox.Ok)
     def dodge(self):
         result = self.character.dodge(self.dodge_bonus_or_malus.value())
@@ -72,19 +77,40 @@ class GUI(QWidget):
             self.mw_choice.clear()
             self.mw_choice.insertItems(0, self.character.melee_weapons.keys())
             self.mw_block.setVisible(True)
+            self.toggle_maneuvers()
         if self.character.long_range_weapons:
             self.lrw_choice.clear()
             self.lrw_choice.insertItems(0, self.character.long_range_weapons.keys())
             self.lrw_block.setVisible(True)
         self.adjustSize()
+    def toggle_maneuvers(self):
+        available = 0
+        for btn in self.maneuver_grp.buttons()[1:]:
+            if btn.text() not in self.character.maneuvers:
+                btn.setVisible(False)
+            else:
+                btn.setVisible(True)
+                available += 1
+        no_selection = self.maneuver_grp.buttons()[0]
+        no_selection.toggle()
+        if available:
+            no_selection.setVisible(True)
+        else:
+            no_selection.setVisible(False)
     def reset_spinners(self):
         self.le_spinner.setMaximum(self.character.maxLE)
         self.le_spinner.setValue(self.character.LE)
         for (condition, value) in self.character.impairments.items():
             self.impairments[condition].setValue(value)
         self.impairments["Schmerz"].setMinimum(self.character.pain_from_le)
-    def get_range(self):
+    @property
+    def lrw_range(self):
         for btn in self.range_grp.buttons():
+            if btn.isChecked():
+                return btn.text()
+    @property
+    def maneuver(self):
+        for btn in self.maneuver_grp.buttons()[1:]:
             if btn.isChecked():
                 return btn.text()
     def _character_block(self):
@@ -162,42 +188,15 @@ class GUI(QWidget):
     def _weapons_block(self):
         weapon_grid = QGridLayout()
         self.mw_block = QGroupBox()
-        self.mw_block.setTitle("Nahkampfwaffen")
-        mw_grid = QGridLayout()
-        self.mw_choice = QComboBox()
-        mw_grid.addWidget(self.mw_choice, 0, 0)
-        attack = QPushButton("Angriff")
-        attack.clicked.connect(lambda: self.attack(lrw=False))
-        mw_grid.addWidget(attack, 0, 5)
-        parry = QPushButton("Parieren")
-        parry.clicked.connect(lambda: self.attack(lrw=False, parry=True))
-        mw_grid.addWidget(parry, 1, 5)
-        self.mw_block.setLayout(mw_grid)
         self.lrw_block = QGroupBox()
+        self.mw_block.setTitle("Nahkampfwaffen")
         self.lrw_block.setTitle("Fernkampfwaffen")
-        lrw_grid = QGridLayout()
-        self.lrw_choice = QComboBox()
-        lrw_grid.addWidget(self.lrw_choice, 0, 0, 1, 2)
-        self.range_grp = QButtonGroup()
-        near = QRadioButton()
-        near.setText("nah")
-        self.range_grp.addButton(near)
-        lrw_grid.addWidget(near, 0, 2)
-        middle = QRadioButton()
-        middle.setText("mittel")
-        self.range_grp.addButton(middle)
-        lrw_grid.addWidget(middle, 0, 3)
-        middle.toggle()
-        far = QRadioButton()
-        far.setText("weit")
-        self.range_grp.addButton(far)
-        lrw_grid.addWidget(far, 0, 4)
+        mw_grid = self._mw_grid()
+        lrw_grid = self._lrw_grid()
+        self.mw_block.setLayout(mw_grid)
         self.lrw_block.setLayout(lrw_grid)
-        shoot = QPushButton("Schießen")
-        shoot.clicked.connect(lambda: self.attack(lrw=True))
-        lrw_grid.addWidget(shoot, 0, 5)
-        weapon_grid.addWidget(self.mw_block, 0, 0, 1, 3)
-        weapon_grid.addWidget(self.lrw_block, 1, 0, 1, 3)
+        weapon_grid.addWidget(self.lrw_block, 0, 0, 1, 3)
+        weapon_grid.addWidget(self.mw_block, 1, 0, 1, 3)
         self.dodge_bonus_or_malus = QSpinBox()
         self.dodge_bonus_or_malus.setMinimum(-20)
         label = QLabel()
@@ -208,3 +207,48 @@ class GUI(QWidget):
         dodge.clicked.connect(self.dodge)
         weapon_grid.addWidget(dodge, 2, 2)
         return weapon_grid
+    def _lrw_grid(self):
+        lrw_grid = QGridLayout()
+        self.lrw_choice = QComboBox()
+        self.range_grp = QButtonGroup()
+        near = QRadioButton()
+        middle = QRadioButton()
+        far = QRadioButton()
+        near.setText("Nah")
+        middle.setText("Mittel")
+        far.setText("Weit")
+        self.range_grp.addButton(near)
+        self.range_grp.addButton(middle)
+        self.range_grp.addButton(far)
+        lrw_grid.addWidget(near, 0, 2)
+        lrw_grid.addWidget(middle, 0, 3)
+        lrw_grid.addWidget(far, 0, 4)
+        lrw_grid.addWidget(self.lrw_choice, 0, 0, 1, 2)
+        middle.toggle()
+        shoot = QPushButton("Schießen")
+        shoot.clicked.connect(lambda: self.attack(lrw=True))
+        lrw_grid.addWidget(shoot, 0, 5)
+        return lrw_grid
+    def _mw_grid(self):
+        mw_grid = QGridLayout()
+        self.maneuver_grp = QButtonGroup()
+        self.mw_choice = QComboBox()
+        attack = QPushButton("Angriff")
+        parry = QPushButton("Parieren")
+        attack.clicked.connect(lambda: self.attack(lrw=False))
+        parry.clicked.connect(lambda: self.attack(lrw=False, parry=True))
+        mw_grid.addWidget(self.mw_choice, 0, 0)
+        mw_grid.addWidget(attack, 0, 5)
+        mw_grid.addWidget(parry, 1, 5)
+        maneuvers = ["kein Manöver"] + list(ATTACK_EFFECTS["AT"].keys())
+        maneuver_grid = QGridLayout()
+        mw_grid.addLayout(maneuver_grid, 1, 0)
+        for row, maneuver in enumerate(maneuvers):
+            label = QLabel()
+            label.setText(maneuver)
+            radiobutton = QRadioButton()
+            radiobutton.setText(maneuver)
+            maneuver_grid.addWidget(radiobutton, row, 0)
+            self.maneuver_grp.addButton(radiobutton)
+        self.maneuver_grp.buttons()[0].toggle()
+        return mw_grid

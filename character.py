@@ -1,25 +1,13 @@
 import json
-import random
-from rule_constants import TRIALS, IMPAIRMENTS, SPECIES, SPELLS, trial_info, \
-                           ATTACK_EFFECTS
 from math import floor, ceil
-
-OP_TEXTS = {"AT": "Attacke", "PA": "Parade", "FK": "Schuss", "AW": "Ausweichen"}
-
-def W20():
-    return random.randint(1, 20)
-
-def W6():
-    return random.randint(1, 6)
+from rule_constants import IMPAIRMENTS, SPECIES, SPELLS, trial_info, effect_info
+from results import Success, Failure, AttackSuccess, AttackFailure, TP, W20
 
 def round(n):
     if n - floor(n) < .5:
         return floor(n)
     else:
         return ceil(n)
-
-def TP(weapon, effects):
-    pass
 
 class Character:
     def __init__(self, filename):
@@ -28,6 +16,7 @@ class Character:
         self.spells = {}
         self.long_range_weapons = {}
         self.melee_weapons = {}
+        self.maneuvers = []
         for key, property in raw_data.items():
             setattr(self, key, property)
         self.maxLE = (SPECIES[self.species]["LE_GW"] + raw_data.get("LE_BONUS", 0)
@@ -105,7 +94,7 @@ class Character:
                            critical=critical_miss,
                            dice_rolls=dice_rolls,
                            bonus_or_malus=bonus_or_malus)
-    def attack(self, weapon_name, effects, lrw=False, parry=False):
+    def attack(self, weapon_name, effects, lrw=False, parry=False, bonus_or_malus=0):
         if lrw:
             weapon = self.long_range_weapons[weapon_name]
             operation = "FK"
@@ -116,7 +105,8 @@ class Character:
             weapon = self.melee_weapons[weapon_name]
             operation = "AT"
         weapon = (weapon_name, weapon)
-        effects = {effect: ATTACK_EFFECTS[effect] for effect in effects}
+        effects = effect_info(effects, operation)
+        effects["Bonus/Malus"] = (bonus_or_malus, 0)
         return self.attack_roll(weapon, operation, effects)
     def attack_roll(self, weapon, operation, effects):
         target_value = weapon[1][operation]
@@ -159,75 +149,8 @@ class Character:
                                  effects=effects,
                                  possible_tp=None)
     def dodge(self, bonus_or_malus):
+        effects = effect_info(self.maneuvers, "AW")
+        effects["Bonus/Malus"] = (bonus_or_malus, 0)
         return self.attack_roll(weapon=(None, {"AW": self.AW}),
                                 operation="AW",
-                                effects={"Bonus/Malus:": (bonus_or_malus, 0)})
-
-class ResultMeta(type):
-    def __repr__(cls):
-        return cls.title
-
-class Result(metaclass=ResultMeta):
-    def __init__(self, character, trial, critical, dice_rolls, bonus_or_malus,
-                 quality=None):
-        self.character = character
-        self.trial = trial
-        self.critical = (critical >= 2)
-        self.terrible = (critical == 3)
-        self.dice_rolls = dice_rolls
-        self.quality = quality
-        self.bonus_or_malus = bonus_or_malus
-        _, self.kind, self.modifier = trial_info(trial)
-    def __repr__(self):
-        if not self.terrible:
-            res = (f"{self.character.name}s {self.kind} {self.trial} ist ein "
-                     f"{'kritischer ' if self.critical else ''}{self.title}\n\n")
-        else:
-            res = (f"{self.character.name}s {self.kind} {self.trial} endet in einem"
-                    f"schrecklichen Missgeschick!\n\n")
-        return res
-    def dice_str(self):
-        res = (4 * " ").join(f"{pr}: {roll} / {getattr(self.character, pr)}"
-                              for (pr, roll) in self.dice_rolls) + "\n"
-        fw, modifier_value = self.character.FW(self.trial)
-        if fw:
-            res += f"\nBonus aus FW: {fw}"
-        if modifier_value:
-            res += f"\nMalus aus {self.modifier}: {-modifier_value}"
-        if self.bonus_or_malus:
-            res += f"\nBonus/Malus: {self.bonus_or_malus}"
-        impairments = -sum(self.character.impairments.values())
-        if impairments:
-            res += f"\nMalus aus Effekten: {impairments}"
-        return res
-
-class Success(Result):
-    title = "Erfolg!"
-    def __repr__(self):
-        return super().__repr__() + f"Qualitätsstufe {self.quality}\n\n" + self.dice_str()
-
-class Failure(Result):
-    title = "Fehlschlag!"
-    def __repr__(self):
-        return super().__repr__() + self.dice_str()
-
-class AttackResult(metaclass=ResultMeta):
-    def __init__(self, character, weapon, operation, critical, dice_rolls,
-                 effects, possible_tp):
-        self.character = character
-        self.weapon = weapon[0]
-        self.operation = operation
-        self.critical = critical
-        self.dice_rolls = dice_rolls
-        self.effects = effects
-        self.kind = OP_TEXTS[operation]
-    def __repr__(self):
-        wpn = f" ({self.weapon})" if self.weapon else ""
-        return (f"{self.character.name}s {self.kind}{wpn} ist ein "
-                 f"{'kritischer ' if self.critical else ''}{self.title}\n\n")
-
-class AttackSuccess(AttackResult):
-    title = "Erfolg!"
-
-class AttackFailure(AttackResult):
-    title = "Fehlschlag!"
+                                effects=effects)

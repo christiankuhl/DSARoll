@@ -156,8 +156,24 @@ def trial_info(trial):
     return list(rolls), kind, modifier
 
 ATTACK_EFFECTS = {
-    "Nah": (2, 1),
-    "Mittel": (0, 0),
-    "Weit": (-2, -1),
-    "Wuchtschlag": (-2, 2)
+    "FK": {
+        "Nah": (2, 1),
+        "Weit": (-2, -1),
+    },
+    "AT": {
+        "Wuchtschlag I": (-2, 2),
+        "Wuchtschlag II": (-4, 4),
+        "Finte I": (-1, 0),
+        "Finte II": (-2, 0),
+        "Finte III": (-3, 0),
+    },
+    "AW": {
+        "Verbessertes Ausweichen I": (1, 0),
+        "Verbessertes Ausweichen II": (1, 0),
+    },
+    "PA": {}
 }
+
+def effect_info(effects, operation):
+    return {effect: impact for (effect, impact) in ATTACK_EFFECTS[operation].items()
+            if effect in effects}
