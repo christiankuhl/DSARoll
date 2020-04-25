@@ -72,8 +72,8 @@
     "Stoffbearbeitung": 0
   },
   "melee_weapons": {
-    "Langschwert": {"AT": 15, "PA": 9, "TP": [1, 4]},
-    "Thorwalerschild": {"AT": 10, "PA": 13, "TP": [1, 1]}
+    "Langschwert": {"AT": 16, "PA": 9, "TP": [1, 4]},
+    "Thorwalerschild": {"AT": 10, "PA": 14, "TP": [1, 1]}
   },
   "maneuvers": [
     "Wuchtschlag I",

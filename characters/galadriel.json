@@ -85,7 +85,7 @@
     "Dolch": {"AT": 9, "PA": 6, "TP": [1, 1]}
   },
   "long_range_weapons": {
-    "Elfenbogen": {"FK": 14, "TP": [1, 5]}
+    "Elfenbogen": {"FK": 15, "TP": [1, 5]}
   },
   "maneuvers": [
     "Verbessertes Ausweichen I",
